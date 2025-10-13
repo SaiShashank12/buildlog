@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div class="text-center">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6">
+                Document Your <span class="text-primary">Build Journey</span>
+            </h1>
+            <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                BuildLog helps you track, document, and showcase your hackathon projects and side projects with beautiful timelines, AI-powered descriptions, and automatic markdown exports.
+            </p>
+            <div class="flex justify-center gap-4">
+                <a href="/dashboard" class="bg-primary text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-indigo-700 transition shadow-lg">
+                    <i class="fas fa-rocket mr-2"></i> Get Started
+                </a>
+                <a href="#features" class="bg-white text-primary border-2 border-primary px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-50 transition">
+                    <i class="fas fa-info-circle mr-2"></i> Learn More
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div id="features" class="bg-white py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">Everything You Need</h2>
+            <p class="text-xl text-gray-600">Powerful features for documenting your projects</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="p-6 bg-gray-50 rounded-xl hover:shadow-lg transition">
+                <div class="bg-primary text-white w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-book text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Daily Build Logs</h3>
+                <p class="text-gray-600">Track your progress with daily logs, code snippets, images, and notes.</p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="p-6 bg-gray-50 rounded-xl hover:shadow-lg transition">
+                <div class="bg-secondary text-white w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-robot text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">AI-Powered</h3>
+                <p class="text-gray-600">Auto-generate compelling project descriptions and summaries.</p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="p-6 bg-gray-50 rounded-xl hover:shadow-lg transition">
+                <div class="bg-primary text-white w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-timeline text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Beautiful Timelines</h3>
+                <p class="text-gray-600">Visualize your project progress with stunning timeline views.</p>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="p-6 bg-gray-50 rounded-xl hover:shadow-lg transition">
+                <div class="bg-secondary text-white w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-file-export text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Markdown Export</h3>
+                <p class="text-gray-600">Export to markdown for GitHub submissions and documentation.</p>
+            </div>
+
+            <!-- Feature 5 -->
+            <div class="p-6 bg-gray-50 rounded-xl hover:shadow-lg transition">
+                <div class="bg-primary text-white w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-globe text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Public Portfolios</h3>
+                <p class="text-gray-600">Generate beautiful portfolio pages to showcase your projects.</p>
+            </div>
+
+            <!-- Feature 6 -->
+            <div class="p-6 bg-gray-50 rounded-xl hover:shadow-lg transition">
+                <div class="bg-secondary text-white w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-cloud text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Cloud Storage</h3>
+                <p class="text-gray-600">Store images, videos, and files securely with Appwrite.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="bg-primary py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl font-bold text-white mb-4">Ready to Document Your Journey?</h2>
+        <p class="text-xl text-indigo-100 mb-8">Start tracking your project progress today!</p>
+        <a href="/dashboard" class="bg-white text-primary px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-100 transition inline-block">
+            <i class="fas fa-arrow-right mr-2"></i> Go to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

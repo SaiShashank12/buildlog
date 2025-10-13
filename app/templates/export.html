@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">Export to Markdown</h1>
+            <a href="/projects/{{ project['$id'] }}" class="text-primary hover:underline">
+                <i class="fas fa-arrow-left mr-1"></i> Back to Project
+            </a>
+        </div>
+
+        <p class="text-gray-600 mb-6">Copy the markdown below for your GitHub submission or documentation.</p>
+
+        <!-- Markdown Preview -->
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Preview</h2>
+                <button
+                    onclick="copyToClipboard()"
+                    class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm"
+                >
+                    <i class="fas fa-copy mr-2"></i> Copy to Clipboard
+                </button>
+            </div>
+            <pre id="markdown-content" class="whitespace-pre-wrap font-mono text-sm text-gray-800 overflow-x-auto">{{ markdown_content }}</pre>
+        </div>
+
+        <!-- Download Button -->
+        <div class="flex gap-4">
+            <button
+                onclick="downloadMarkdown()"
+                class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-semibold"
+            >
+                <i class="fas fa-download mr-2"></i> Download as .md
+            </button>
+            <a
+                href="/projects/{{ project['$id'] }}"
+                class="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-semibold"
+            >
+                <i class="fas fa-arrow-left mr-2"></i> Back to Project
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard() {
+    const content = document.getElementById('markdown-content').textContent;
+    navigator.clipboard.writeText(content).then(() => {
+        alert('Markdown copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
+}
+
+function downloadMarkdown() {
+    const content = document.getElementById('markdown-content').textContent;
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '{{ project.name|replace(" ", "_") }}_buildlog.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}

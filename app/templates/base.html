@@ -67,6 +67,8 @@
                     </a>
                 </div>
                 <div class="flex items-center space-x-4">
+                    {% if user %}
+                    <!-- Logged in navigation -->
                     <a href="/dashboard" class="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition">
                         <i class="fas fa-th-large mr-1"></i> Dashboard
                     </a>
@@ -80,6 +82,25 @@
                     <a href="/projects/new" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
                         <i class="fas fa-plus mr-1"></i> New Project
                     </a>
+                    <span class="text-gray-700 dark:text-gray-300 px-3 py-2 text-sm">
+                        <i class="fas fa-user mr-1"></i> {{ user.name }}
+                    </span>
+                    <a href="/logout" class="text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 px-3 py-2 rounded-md text-sm font-medium transition">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                    </a>
+                    {% else %}
+                    <!-- Logged out navigation -->
+                    <button id="darkModeToggle" class="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition dark-mode-toggle" aria-label="Toggle dark mode">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:inline"></i>
+                    </button>
+                    <a href="/login" class="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition">
+                        <i class="fas fa-sign-in-alt mr-1"></i> Login
+                    </a>
+                    <a href="/signup" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+                        <i class="fas fa-user-plus mr-1"></i> Sign Up
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

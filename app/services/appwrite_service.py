@@ -17,13 +17,77 @@ class AppwriteService:
         self.build_logs_collection_id = settings.appwrite_build_logs_collection_id
         self.storage_bucket_id = settings.appwrite_storage_bucket_id
 
-    def _get_headers(self):
+    def _get_headers(self, session_token=None):
         """Get common headers for API requests"""
-        return {
+        headers = {
             "X-Appwrite-Project": self.project_id,
-            "X-Appwrite-Key": self.api_key,
             "Content-Type": "application/json"
         }
+
+        if session_token:
+            # User session - pass session as cookie
+            # Appwrite expects: a_session_<projectId>=<sessionSecret>
+            headers["Cookie"] = f"a_session_{self.project_id}={session_token}"
+        else:
+            # Admin operations - use API key
+            headers["X-Appwrite-Key"] = self.api_key
+
+        return headers
+
+    # Authentication Operations
+    def create_account(self, email: str, password: str, name: str):
+        """Create a new user account"""
+        try:
+            url = f"{self.endpoint}/account"
+            payload = {
+                "userId": ID.unique(),
+                "email": email,
+                "password": password,
+                "name": name
+            }
+            response = requests.post(url, headers=self._get_headers(), json=payload)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            print(f"Error creating account: {e}")
+            raise
+
+    def create_session(self, email: str, password: str):
+        """Create a new session (login)"""
+        try:
+            url = f"{self.endpoint}/account/sessions/email"
+            payload = {
+                "email": email,
+                "password": password
+            }
+            response = requests.post(url, headers=self._get_headers(), json=payload)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            print(f"Error creating session: {e}")
+            raise
+
+    def get_account(self, session_token: str):
+        """Get current user account details"""
+        try:
+            url = f"{self.endpoint}/account"
+            response = requests.get(url, headers=self._get_headers(session_token))
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            print(f"Error getting account: {e}")
+            raise
+
+    def delete_session(self, session_token: str, session_id: str):
+        """Delete a session (logout)"""
+        try:
+            url = f"{self.endpoint}/account/sessions/{session_id}"
+            response = requests.delete(url, headers=self._get_headers(session_token))
+            response.raise_for_status()
+            return True
+        except Exception as e:
+            print(f"Error deleting session: {e}")
+            raise
 
     # Database Operations
     def create_project(self, user_id: str, data: dict):
@@ -53,7 +117,9 @@ class AppwriteService:
             url = f"{self.endpoint}/databases/{self.database_id}/collections/{self.projects_collection_id}/documents"
             response = requests.get(url, headers=self._get_headers())
             response.raise_for_status()
-            return response.json()['documents']
+            # Filter by user_id client-side
+            all_projects = response.json()['documents']
+            return [proj for proj in all_projects if proj.get('user_id') == user_id]
         except Exception as e:
             print(f"Error getting projects: {e}")
             raise

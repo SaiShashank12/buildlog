@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     secret_key: str
     debug: bool = True
 
+    # AI Configuration (optional)
+    openai_api_key: str = ""
+    ai_enabled: bool = False
+
     class Config:
         env_file = ".env"
         case_sensitive = False

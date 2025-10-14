@@ -9,6 +9,7 @@ import json
 
 from app.config import get_settings
 from app.services.appwrite_service import appwrite_service
+from app.services.ai_service import ai_service
 from app.models.schemas import (
     ProjectCreate, ProjectUpdate, BuildLogCreate, BuildLogUpdate
 )
@@ -390,6 +391,83 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         print(f"Error uploading file: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# AI-powered endpoints
+@app.post("/ai/generate-description")
+async def generate_project_description(
+    project_name: str = Form(...),
+    tech_stack: str = Form("")
+):
+    """Generate AI-powered project description"""
+    try:
+        if not ai_service.is_enabled():
+            return JSONResponse({
+                "success": False,
+                "error": "AI features are not enabled. Please configure OPENAI_API_KEY in your environment."
+            }, status_code=400)
+
+        tech_stack_list = [t.strip() for t in tech_stack.split(",")] if tech_stack else []
+        description = ai_service.generate_project_description(project_name, tech_stack_list)
+
+        if not description:
+            return JSONResponse({
+                "success": False,
+                "error": "Failed to generate description"
+            }, status_code=500)
+
+        return JSONResponse({
+            "success": True,
+            "description": description
+        })
+    except Exception as e:
+        print(f"Error generating description: {e}")
+        return JSONResponse({
+            "success": False,
+            "error": str(e)
+        }, status_code=500)
+
+
+@app.post("/ai/generate-log-content")
+async def generate_build_log_content(
+    project_name: str = Form(...),
+    log_type: str = Form("update"),
+    context: str = Form("")
+):
+    """Generate AI-powered build log content"""
+    try:
+        if not ai_service.is_enabled():
+            return JSONResponse({
+                "success": False,
+                "error": "AI features are not enabled. Please configure OPENAI_API_KEY in your environment."
+            }, status_code=400)
+
+        content = ai_service.generate_build_log_content(project_name, log_type, context)
+
+        if not content:
+            return JSONResponse({
+                "success": False,
+                "error": "Failed to generate content"
+            }, status_code=500)
+
+        return JSONResponse({
+            "success": True,
+            "content": content
+        })
+    except Exception as e:
+        print(f"Error generating log content: {e}")
+        return JSONResponse({
+            "success": False,
+            "error": str(e)
+        }, status_code=500)
+
+
+@app.get("/ai/status")
+async def ai_status():
+    """Check if AI features are enabled"""
+    return JSONResponse({
+        "enabled": ai_service.is_enabled()
+    })
 
 
 # Health check endpoint

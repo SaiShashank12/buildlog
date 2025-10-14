@@ -503,6 +503,126 @@ async def ai_status():
     })
 
 
+@app.post("/ai/generate-summary")
+async def generate_project_summary(
+    project_id: str = Form(...)
+):
+    """Generate AI-powered project summary"""
+    try:
+        if not ai_service.is_enabled():
+            return JSONResponse({
+                "success": False,
+                "error": "AI features are not enabled. Please configure OPENAI_API_KEY in your environment."
+            }, status_code=400)
+
+        # Get project and logs
+        project = appwrite_service.get_project(project_id)
+        build_logs = appwrite_service.get_build_logs(project_id)
+
+        # Sort logs by created_at (newest first)
+        build_logs.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+
+        summary = ai_service.generate_project_summary(
+            project.get("name", ""),
+            project.get("description", ""),
+            build_logs
+        )
+
+        if not summary:
+            return JSONResponse({
+                "success": False,
+                "error": "Failed to generate summary"
+            }, status_code=500)
+
+        return JSONResponse({
+            "success": True,
+            "summary": summary
+        })
+    except Exception as e:
+        print(f"Error generating project summary: {e}")
+        return JSONResponse({
+            "success": False,
+            "error": str(e)
+        }, status_code=500)
+
+
+@app.post("/ai/suggest-tags")
+async def suggest_tags(
+    title: str = Form(...),
+    content: str = Form("")
+):
+    """Generate AI-powered tag suggestions"""
+    try:
+        if not ai_service.is_enabled():
+            return JSONResponse({
+                "success": False,
+                "error": "AI features are not enabled. Please configure OPENAI_API_KEY in your environment."
+            }, status_code=400)
+
+        tags = ai_service.suggest_tags(title, content)
+
+        if not tags:
+            return JSONResponse({
+                "success": False,
+                "error": "Failed to generate tags"
+            }, status_code=500)
+
+        return JSONResponse({
+            "success": True,
+            "tags": tags
+        })
+    except Exception as e:
+        print(f"Error suggesting tags: {e}")
+        return JSONResponse({
+            "success": False,
+            "error": str(e)
+        }, status_code=500)
+
+
+@app.post("/ai/generate-readme")
+async def generate_readme(
+    project_id: str = Form(...)
+):
+    """Generate AI-powered README from project data"""
+    try:
+        if not ai_service.is_enabled():
+            return JSONResponse({
+                "success": False,
+                "error": "AI features are not enabled. Please configure OPENAI_API_KEY in your environment."
+            }, status_code=400)
+
+        # Get project and logs
+        project = appwrite_service.get_project(project_id)
+        build_logs = appwrite_service.get_build_logs(project_id)
+
+        # Sort logs by created_at
+        build_logs.sort(key=lambda x: x.get("created_at", ""))
+
+        readme = ai_service.generate_readme(
+            project.get("name", ""),
+            project.get("description", ""),
+            project.get("tech_stack", []),
+            build_logs
+        )
+
+        if not readme:
+            return JSONResponse({
+                "success": False,
+                "error": "Failed to generate README"
+            }, status_code=500)
+
+        return JSONResponse({
+            "success": True,
+            "readme": readme
+        })
+    except Exception as e:
+        print(f"Error generating README: {e}")
+        return JSONResponse({
+            "success": False,
+            "error": str(e)
+        }, status_code=500)
+
+
 # Health check endpoint
 @app.get("/health")
 async def health_check():

@@ -17,35 +17,35 @@ def client():
 def mock_appwrite():
     """Mock Appwrite service"""
     with patch('main.appwrite_service') as mock:
-        # Mock async methods
-        mock.get_projects = AsyncMock(return_value=[])
-        mock.get_project = AsyncMock(return_value={
+        # Mock synchronous methods (no longer async)
+        mock.get_projects = Mock(return_value=[])
+        mock.get_project = Mock(return_value={
             '$id': '123',
             'name': 'Test Project',
             'description': 'Test description',
             'tech_stack': ['Python'],
             'status': 'in_progress'
         })
-        mock.create_project = AsyncMock(return_value={
+        mock.create_project = Mock(return_value={
             '$id': '123',
             'name': 'New Project'
         })
-        mock.update_project = AsyncMock(return_value={
+        mock.update_project = Mock(return_value={
             '$id': '123',
             'name': 'Updated Project'
         })
-        mock.delete_project = AsyncMock(return_value=True)
-        mock.get_build_logs = AsyncMock(return_value=[])
-        mock.create_build_log = AsyncMock(return_value={
+        mock.delete_project = Mock(return_value=True)
+        mock.get_build_logs = Mock(return_value=[])
+        mock.create_build_log = Mock(return_value={
             '$id': 'log123',
             'title': 'New Log'
         })
-        mock.update_build_log = AsyncMock(return_value={
+        mock.update_build_log = Mock(return_value={
             '$id': 'log123',
             'title': 'Updated Log'
         })
-        mock.delete_build_log = AsyncMock(return_value=True)
-        mock.upload_file = AsyncMock(return_value={
+        mock.delete_build_log = Mock(return_value=True)
+        mock.upload_file = Mock(return_value={
             '$id': 'file123',
             'name': 'test.jpg'
         })
@@ -304,3 +304,124 @@ class TestErrorHandling:
         )
         # Should return error for missing required fields
         assert response.status_code in [400, 422, 500]
+
+    def test_dashboard_error_handling(self, client, mock_appwrite):
+        """Test dashboard handles errors gracefully"""
+        mock_appwrite.get_projects.side_effect = Exception("Database error")
+        response = client.get("/dashboard")
+        # Should return dashboard with empty projects
+        assert response.status_code == 200
+        assert "Dashboard" in response.text
+
+    def test_create_project_error_handling(self, client, mock_appwrite):
+        """Test create project error handling"""
+        mock_appwrite.create_project.side_effect = Exception("Database error")
+        response = client.post(
+            "/projects/new",
+            data={
+                "name": "Test Project",
+                "description": "Test description"
+            },
+            follow_redirects=False
+        )
+        assert response.status_code == 500
+
+    def test_edit_project_not_found(self, client, mock_appwrite):
+        """Test editing nonexistent project"""
+        mock_appwrite.get_project.side_effect = Exception("Not found")
+        response = client.get("/projects/999/edit")
+        assert response.status_code == 404
+
+    def test_update_project_error_handling(self, client, mock_appwrite):
+        """Test update project error handling"""
+        mock_appwrite.update_project.side_effect = Exception("Update error")
+        response = client.post(
+            "/projects/123/edit",
+            data={
+                "name": "Updated Project",
+                "description": "Updated"
+            },
+            follow_redirects=False
+        )
+        assert response.status_code == 500
+
+    def test_delete_project_error_handling(self, client, mock_appwrite):
+        """Test delete project error handling"""
+        mock_appwrite.delete_project.side_effect = Exception("Delete error")
+        response = client.post("/projects/123/delete", follow_redirects=False)
+        assert response.status_code == 500
+
+    def test_new_log_form_error_handling(self, client, mock_appwrite):
+        """Test new log form with nonexistent project"""
+        mock_appwrite.get_project.side_effect = Exception("Not found")
+        response = client.get("/projects/999/logs/new")
+        assert response.status_code == 404
+
+    def test_create_build_log_error_handling(self, client, mock_appwrite):
+        """Test create build log error handling"""
+        mock_appwrite.create_build_log.side_effect = Exception("Create error")
+        response = client.post(
+            "/projects/123/logs/new",
+            data={
+                "title": "Test Log",
+                "content": "Content"
+            },
+            follow_redirects=False
+        )
+        assert response.status_code == 500
+
+    def test_edit_log_not_found(self, client, mock_appwrite):
+        """Test editing nonexistent log"""
+        mock_appwrite.get_project.return_value = {"$id": "123", "name": "Project"}
+        mock_appwrite.get_build_logs.return_value = []
+        response = client.get("/projects/123/logs/999/edit")
+        assert response.status_code == 404
+
+    def test_edit_log_project_not_found(self, client, mock_appwrite):
+        """Test editing log when project not found"""
+        mock_appwrite.get_project.side_effect = Exception("Not found")
+        response = client.get("/projects/123/logs/log123/edit")
+        assert response.status_code == 404
+
+    def test_update_build_log_error_handling(self, client, mock_appwrite):
+        """Test update build log error handling"""
+        mock_appwrite.update_build_log.side_effect = Exception("Update error")
+        response = client.post(
+            "/projects/123/logs/log123/edit",
+            data={
+                "title": "Updated Log",
+                "content": "Updated content"
+            },
+            follow_redirects=False
+        )
+        assert response.status_code == 500
+
+    def test_delete_build_log_error_handling(self, client, mock_appwrite):
+        """Test delete build log error handling"""
+        mock_appwrite.delete_build_log.side_effect = Exception("Delete error")
+        response = client.post("/projects/123/logs/log123/delete", follow_redirects=False)
+        assert response.status_code == 500
+
+    def test_export_error_handling(self, client, mock_appwrite):
+        """Test export error handling"""
+        mock_appwrite.get_project.side_effect = Exception("Not found")
+        response = client.get("/projects/123/export")
+        assert response.status_code == 500
+
+    def test_portfolio_error_handling(self, client, mock_appwrite):
+        """Test portfolio error handling"""
+        mock_appwrite.get_project.side_effect = Exception("Not found")
+        response = client.get("/portfolio/123")
+        assert response.status_code == 404
+
+    def test_upload_file_error_handling(self, client, mock_appwrite):
+        """Test upload file error handling"""
+        from io import BytesIO
+        mock_appwrite.upload_file.side_effect = Exception("Upload error")
+
+        file_data = BytesIO(b"fake image data")
+        response = client.post(
+            "/upload",
+            files={"file": ("test.jpg", file_data, "image/jpeg")}
+        )
+        assert response.status_code == 500

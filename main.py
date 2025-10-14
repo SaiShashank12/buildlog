@@ -32,11 +32,9 @@ settings = get_settings()
 # Helper function to get user from session (simplified for demo)
 async def get_current_user(request: Request):
     """Get current user from session"""
-    user_id = request.session.get("user_id") if hasattr(request, "session") else None
-    if not user_id:
-        # For demo purposes, return a mock user
-        return {"$id": "demo_user", "email": "demo@buildlog.com", "name": "Demo User"}
-    return {"$id": user_id}
+    # For demo purposes, always return a mock user
+    # In production, this would check session/JWT tokens
+    return {"$id": "demo_user", "email": "demo@buildlog.com", "name": "Demo User"}
 
 
 # Routes
@@ -54,7 +52,7 @@ async def dashboard(request: Request):
     """User dashboard with all projects"""
     try:
         user = await get_current_user(request)
-        projects = await appwrite_service.get_projects(user["$id"])
+        projects = appwrite_service.get_projects(user["$id"])
 
         return templates.TemplateResponse("dashboard.html", {
             "request": request,
@@ -102,15 +100,15 @@ async def create_project(
             "name": name,
             "description": description,
             "tech_stack": tech_stack.split(",") if tech_stack else [],
-            "repository_url": repository_url,
-            "demo_url": demo_url,
+            "repository_url": repository_url if repository_url else None,
+            "demo_url": demo_url if demo_url else None,
             "tags": tags.split(",") if tags else [],
             "status": "in_progress",
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat()
         }
 
-        project = await appwrite_service.create_project(user["$id"], project_data)
+        project = appwrite_service.create_project(user["$id"], project_data)
         return RedirectResponse(url=f"/projects/{project['$id']}", status_code=303)
     except Exception as e:
         print(f"Error creating project: {e}")
@@ -122,8 +120,8 @@ async def view_project(request: Request, project_id: str):
     """View single project with all build logs"""
     try:
         user = await get_current_user(request)
-        project = await appwrite_service.get_project(project_id)
-        build_logs = await appwrite_service.get_build_logs(project_id)
+        project = appwrite_service.get_project(project_id)
+        build_logs = appwrite_service.get_build_logs(project_id)
 
         # Sort build logs by created_at (newest first)
         build_logs.sort(key=lambda x: x.get("created_at", ""), reverse=True)
@@ -145,7 +143,7 @@ async def edit_project_form(request: Request, project_id: str):
     """Show edit project form"""
     try:
         user = await get_current_user(request)
-        project = await appwrite_service.get_project(project_id)
+        project = appwrite_service.get_project(project_id)
 
         return templates.TemplateResponse("project_form.html", {
             "request": request,
@@ -176,14 +174,14 @@ async def update_project(
             "name": name,
             "description": description,
             "tech_stack": tech_stack.split(",") if tech_stack else [],
-            "repository_url": repository_url,
-            "demo_url": demo_url,
+            "repository_url": repository_url if repository_url else None,
+            "demo_url": demo_url if demo_url else None,
             "tags": tags.split(",") if tags else [],
             "status": status,
             "updated_at": datetime.now().isoformat()
         }
 
-        await appwrite_service.update_project(project_id, project_data)
+        appwrite_service.update_project(project_id, project_data)
         return RedirectResponse(url=f"/projects/{project_id}", status_code=303)
     except Exception as e:
         print(f"Error updating project: {e}")
@@ -194,7 +192,7 @@ async def update_project(
 async def delete_project(request: Request, project_id: str):
     """Delete a project"""
     try:
-        await appwrite_service.delete_project(project_id)
+        appwrite_service.delete_project(project_id)
         return RedirectResponse(url="/dashboard", status_code=303)
     except Exception as e:
         print(f"Error deleting project: {e}")
@@ -206,7 +204,7 @@ async def new_log_form(request: Request, project_id: str):
     """Show create build log form"""
     try:
         user = await get_current_user(request)
-        project = await appwrite_service.get_project(project_id)
+        project = appwrite_service.get_project(project_id)
 
         return templates.TemplateResponse("log_form.html", {
             "request": request,
@@ -242,7 +240,7 @@ async def create_build_log(
             "created_at": datetime.now().isoformat()
         }
 
-        await appwrite_service.create_build_log(project_id, log_data)
+        appwrite_service.create_build_log(project_id, log_data)
         return RedirectResponse(url=f"/projects/{project_id}", status_code=303)
     except Exception as e:
         print(f"Error creating build log: {e}")
@@ -254,10 +252,10 @@ async def edit_log_form(request: Request, project_id: str, log_id: str):
     """Show edit build log form"""
     try:
         user = await get_current_user(request)
-        project = await appwrite_service.get_project(project_id)
+        project = appwrite_service.get_project(project_id)
 
         # Get the specific log
-        build_logs = await appwrite_service.get_build_logs(project_id)
+        build_logs = appwrite_service.get_build_logs(project_id)
         log = next((log for log in build_logs if log["$id"] == log_id), None)
 
         if not log:
@@ -294,7 +292,7 @@ async def update_build_log(
             "tags": tags.split(",") if tags else []
         }
 
-        await appwrite_service.update_build_log(log_id, log_data)
+        appwrite_service.update_build_log(log_id, log_data)
         return RedirectResponse(url=f"/projects/{project_id}", status_code=303)
     except Exception as e:
         print(f"Error updating build log: {e}")
@@ -305,7 +303,7 @@ async def update_build_log(
 async def delete_build_log(request: Request, project_id: str, log_id: str):
     """Delete a build log entry"""
     try:
-        await appwrite_service.delete_build_log(log_id)
+        appwrite_service.delete_build_log(log_id)
         return RedirectResponse(url=f"/projects/{project_id}", status_code=303)
     except Exception as e:
         print(f"Error deleting build log: {e}")
@@ -316,8 +314,8 @@ async def delete_build_log(request: Request, project_id: str, log_id: str):
 async def export_to_markdown(request: Request, project_id: str):
     """Export project to markdown"""
     try:
-        project = await appwrite_service.get_project(project_id)
-        build_logs = await appwrite_service.get_build_logs(project_id)
+        project = appwrite_service.get_project(project_id)
+        build_logs = appwrite_service.get_build_logs(project_id)
 
         # Sort build logs by created_at
         build_logs.sort(key=lambda x: x.get("created_at", ""))
@@ -360,8 +358,8 @@ async def export_to_markdown(request: Request, project_id: str):
 async def public_portfolio(request: Request, project_id: str):
     """Public portfolio page for a project"""
     try:
-        project = await appwrite_service.get_project(project_id)
-        build_logs = await appwrite_service.get_build_logs(project_id)
+        project = appwrite_service.get_project(project_id)
+        build_logs = appwrite_service.get_build_logs(project_id)
 
         # Sort build logs by created_at
         build_logs.sort(key=lambda x: x.get("created_at", ""))
@@ -382,7 +380,7 @@ async def upload_file(file: UploadFile = File(...)):
     """Upload a file to Appwrite Storage"""
     try:
         file_content = await file.read()
-        uploaded_file = await appwrite_service.upload_file(file_content, file.filename)
+        uploaded_file = appwrite_service.upload_file(file_content, file.filename)
 
         return JSONResponse({
             "success": True,

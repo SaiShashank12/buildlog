@@ -84,6 +84,18 @@
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="frontend, api, testing (comma-separated)"
                 >
+                <div class="mt-2 flex items-center gap-2">
+                    <button
+                        type="button"
+                        id="suggestTagsBtn"
+                        class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:from-purple-600 hover:to-indigo-700 transition"
+                    >
+                        <i class="fas fa-tags mr-2"></i>Suggest Tags with AI
+                    </button>
+                    <span id="tagsLoader" class="text-sm text-gray-500 hidden">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>Generating...
+                    </span>
+                </div>
                 <p class="text-xs text-gray-500 mt-1">Separate multiple tags with commas</p>
             </div>
 
@@ -142,6 +154,49 @@ document.getElementById('generateContentBtn').addEventListener('click', async fu
     } catch (error) {
         console.error('Error:', error);
         alert('Failed to generate content. Please try again.');
+    } finally {
+        btn.disabled = false;
+        loader.classList.add('hidden');
+    }
+});
+
+document.getElementById('suggestTagsBtn').addEventListener('click', async function() {
+    const title = document.getElementById('title').value;
+    const content = document.getElementById('content').value;
+
+    if (!title && !content) {
+        alert('Please enter a title or content first to generate tag suggestions.');
+        return;
+    }
+
+    const btn = this;
+    const loader = document.getElementById('tagsLoader');
+    const tagsField = document.getElementById('tags');
+
+    // Show loading state
+    btn.disabled = true;
+    loader.classList.remove('hidden');
+
+    try {
+        const formData = new FormData();
+        formData.append('title', title || '');
+        formData.append('content', content || '');
+
+        const response = await fetch('/ai/suggest-tags', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            tagsField.value = data.tags.join(', ');
+        } else {
+            alert(data.error || 'Failed to suggest tags');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to suggest tags. Please try again.');
     } finally {
         btn.disabled = false;
         loader.classList.add('hidden');

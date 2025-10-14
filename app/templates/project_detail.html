@@ -13,6 +13,12 @@
                 <a href="/projects/{{ project['$id'] }}/edit" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
                     <i class="fas fa-edit"></i> Edit
                 </a>
+                <button id="generateSummaryBtn" class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition">
+                    <i class="fas fa-magic"></i> AI Summary
+                </button>
+                <button id="generateReadmeBtn" class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition">
+                    <i class="fas fa-file-alt"></i> Generate README
+                </button>
                 <a href="/projects/{{ project['$id'] }}/export" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
                     <i class="fas fa-download"></i> Export
                 </a>
@@ -125,4 +131,198 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+// AI Summary Modal
+const summaryModal = document.createElement('div');
+summaryModal.className = 'hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+summaryModal.innerHTML = `
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">AI Project Summary</h2>
+                <button id="closeSummaryModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="summaryContent" class="prose dark:prose-invert max-w-none">
+                <div class="flex items-center justify-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+`;
+document.body.appendChild(summaryModal);
+
+// README Modal
+const readmeModal = document.createElement('div');
+readmeModal.className = 'hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+readmeModal.innerHTML = `
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Generated README</h2>
+                <button id="closeReadmeModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="readmeContent" class="prose dark:prose-invert max-w-none">
+                <div class="flex items-center justify-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl text-primary"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex gap-2">
+                <button id="copyReadmeBtn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                    <i class="fas fa-copy mr-2"></i>Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
+`;
+document.body.appendChild(readmeModal);
+
+// Generate Summary Button
+document.getElementById('generateSummaryBtn').addEventListener('click', async function() {
+    const projectId = "{{ project['$id'] }}";
+
+    summaryModal.classList.remove('hidden');
+    document.getElementById('summaryContent').innerHTML = `
+        <div class="flex items-center justify-center py-8">
+            <i class="fas fa-spinner fa-spin text-4xl text-primary"></i>
+        </div>
+    `;
+
+    try {
+        const formData = new FormData();
+        formData.append('project_id', projectId);
+
+        const response = await fetch('/ai/generate-summary', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Convert markdown to HTML-like display
+            const summaryHtml = data.summary
+                .replace(/## (.*)/g, '<h2 class="text-xl font-bold text-gray-900 dark:text-white mt-4 mb-2">$1</h2>')
+                .replace(/### (.*)/g, '<h3 class="text-lg font-semibold text-gray-900 dark:text-white mt-3 mb-2">$1</h3>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-gray-900 dark:text-white">$1</strong>')
+                .replace(/- (.*)/g, '<li class="ml-4 text-gray-700 dark:text-gray-300">$1</li>')
+                .replace(/\n\n/g, '<br><br>');
+
+            document.getElementById('summaryContent').innerHTML = summaryHtml;
+        } else {
+            document.getElementById('summaryContent').innerHTML = `
+                <div class="text-red-600 dark:text-red-400">
+                    <i class="fas fa-exclamation-circle mr-2"></i>${data.error || 'Failed to generate summary'}
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('summaryContent').innerHTML = `
+            <div class="text-red-600 dark:text-red-400">
+                <i class="fas fa-exclamation-circle mr-2"></i>Failed to generate summary. Please try again.
+            </div>
+        `;
+    }
+});
+
+// Generate README Button
+document.getElementById('generateReadmeBtn').addEventListener('click', async function() {
+    const projectId = "{{ project['$id'] }}";
+
+    readmeModal.classList.remove('hidden');
+    document.getElementById('readmeContent').innerHTML = `
+        <div class="flex items-center justify-center py-8">
+            <i class="fas fa-spinner fa-spin text-4xl text-primary"></i>
+        </div>
+    `;
+
+    try {
+        const formData = new FormData();
+        formData.append('project_id', projectId);
+
+        const response = await fetch('/ai/generate-readme', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Store raw markdown for copying
+            window.generatedReadme = data.readme;
+
+            // Convert markdown to HTML-like display
+            const readmeHtml = data.readme
+                .replace(/# (.*)/g, '<h1 class="text-3xl font-bold text-gray-900 dark:text-white mt-6 mb-3">$1</h1>')
+                .replace(/## (.*)/g, '<h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-5 mb-2">$1</h2>')
+                .replace(/### (.*)/g, '<h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-4 mb-2">$1</h3>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-gray-900 dark:text-white">$1</strong>')
+                .replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm text-gray-800 dark:text-gray-200">$1</code>')
+                .replace(/- (.*)/g, '<li class="ml-4 text-gray-700 dark:text-gray-300">$1</li>')
+                .replace(/\n\n/g, '<br><br>');
+
+            document.getElementById('readmeContent').innerHTML = readmeHtml;
+        } else {
+            document.getElementById('readmeContent').innerHTML = `
+                <div class="text-red-600 dark:text-red-400">
+                    <i class="fas fa-exclamation-circle mr-2"></i>${data.error || 'Failed to generate README'}
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('readmeContent').innerHTML = `
+            <div class="text-red-600 dark:text-red-400">
+                <i class="fas fa-exclamation-circle mr-2"></i>Failed to generate README. Please try again.
+            </div>
+        `;
+    }
+});
+
+// Close modal handlers
+document.getElementById('closeSummaryModal').addEventListener('click', function() {
+    summaryModal.classList.add('hidden');
+});
+
+document.getElementById('closeReadmeModal').addEventListener('click', function() {
+    readmeModal.classList.add('hidden');
+});
+
+// Copy README to clipboard
+document.getElementById('copyReadmeBtn').addEventListener('click', function() {
+    if (window.generatedReadme) {
+        navigator.clipboard.writeText(window.generatedReadme).then(() => {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-2"></i>Copied!';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            alert('Failed to copy to clipboard');
+        });
+    }
+});
+
+// Close modals on background click
+summaryModal.addEventListener('click', function(e) {
+    if (e.target === summaryModal) {
+        summaryModal.classList.add('hidden');
+    }
+});
+
+readmeModal.addEventListener('click', function(e) {
+    if (e.target === readmeModal) {
+        readmeModal.classList.add('hidden');
+    }
+});
+</script>
+
 {% endblock %}

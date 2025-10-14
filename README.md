@@ -20,6 +20,7 @@ Built for the **Appwrite Hacktoberfest 2025 Hackathon**, BuildLog helps develope
 - 🎨 **Beautiful Timeline Views**: Visualize your project journey with stunning, color-coded timelines
 - 📊 **Project Dashboard**: Manage multiple projects in one centralized location
 - 📈 **Analytics Dashboard**: Comprehensive analytics with beautiful charts powered by Chart.js
+- 🌙 **Dark Mode**: Fully-featured dark theme with smooth transitions and localStorage persistence
 - 📄 **Markdown Export**: One-click export to markdown for GitHub submissions and documentation
 - 🌐 **Public Portfolios**: Generate beautiful, shareable portfolio pages for each project
 - 📁 **File Uploads**: Store images, videos, and files securely with Appwrite Storage
@@ -386,10 +387,11 @@ Modern, responsive UI with Tailwind CSS that's both functional and stunning.
 ## 🚧 Future Enhancements
 
 - ✅ **AI-Powered Features**: Auto-generate project descriptions and build logs (IMPLEMENTED)
+- ✅ **Analytics Dashboard**: Comprehensive charts and visualizations (IMPLEMENTED)
+- ✅ **Dark Mode**: Full dark theme support with localStorage persistence (IMPLEMENTED)
 - **Enhanced AI Features**: AI-powered markdown export summaries and suggestions
 - **Real-time Collaboration**: Multiple team members on one project
 - **Authentication**: Full user authentication with Appwrite Auth
-- **Analytics**: Track progress metrics and time spent
 - **Integrations**: GitHub, GitLab, Jira sync
 - **Mobile App**: iOS and Android apps
 - **Team Features**: Collaboration tools for hackathon teams

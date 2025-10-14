@@ -10,6 +10,7 @@ import json
 from app.config import get_settings
 from app.services.appwrite_service import appwrite_service
 from app.services.ai_service import ai_service
+from app.services.analytics_service import AnalyticsService
 from app.models.schemas import (
     ProjectCreate, ProjectUpdate, BuildLogCreate, BuildLogUpdate
 )
@@ -28,6 +29,9 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
 settings = get_settings()
+
+# Initialize analytics service
+analytics_service = AnalyticsService(appwrite_service)
 
 
 # Helper function to get user from session (simplified for demo)
@@ -69,6 +73,35 @@ async def dashboard(request: Request):
             "projects": [],
             "user": await get_current_user(request)
         })
+
+
+@app.get("/analytics", response_class=HTMLResponse)
+async def analytics_dashboard(request: Request):
+    """Analytics dashboard with charts and statistics"""
+    try:
+        user = await get_current_user(request)
+        return templates.TemplateResponse("analytics.html", {
+            "request": request,
+            "title": "Analytics",
+            "user": user
+        })
+    except Exception as e:
+        print(f"Error loading analytics: {e}")
+        raise HTTPException(status_code=500, detail="Error loading analytics dashboard")
+
+
+@app.get("/api/analytics")
+async def get_analytics(request: Request):
+    """Get analytics data"""
+    try:
+        user = await get_current_user(request)
+        analytics = analytics_service.get_complete_analytics(user["$id"])
+        return JSONResponse(analytics)
+    except Exception as e:
+        print(f"Error getting analytics: {e}")
+        return JSONResponse({
+            "error": str(e)
+        }, status_code=500)
 
 
 @app.get("/projects/new", response_class=HTMLResponse)

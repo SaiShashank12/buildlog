@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,8 +18,16 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* Prevent horizontal overflow */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Navigation -->
     <nav class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,6 +42,9 @@
                     <a href="/dashboard" class="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition">
                         <i class="fas fa-th-large mr-1"></i> Dashboard
                     </a>
+                    <a href="/analytics" class="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition">
+                        <i class="fas fa-chart-line mr-1"></i> Analytics
+                    </a>
                     <a href="/projects/new" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
                         <i class="fas fa-plus mr-1"></i> New Project
                     </a>
@@ -43,12 +54,12 @@
     </nav>
 
     <!-- Main Content -->
-    <main>
+    <main class="flex-1">
         {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 mt-auto">
+    <footer class="bg-white border-t border-gray-200 mt-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="text-center text-gray-500 text-sm">
                 <p>Built with <i class="fas fa-heart text-red-500"></i> using <a href="https://appwrite.io" class="text-primary hover:underline">Appwrite</a></p>

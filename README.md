@@ -3,13 +3,13 @@
 ![BuildLog Banner](https://img.shields.io/badge/Built%20with-Appwrite-F02E65?style=for-the-badge&logo=Appwrite&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.13+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![Test Coverage](https://img.shields.io/badge/Coverage-98%25-brightgreen?style=for-the-badge)
+![Test Coverage](https://img.shields.io/badge/Coverage-96%25-brightgreen?style=for-the-badge)
 
-**Document your build journey with beautiful timelines, rich logging, AI-powered content generation, and automatic markdown exports.**
+**Document your build journey with beautiful timelines, rich logging, AI-powered content generation, comprehensive analytics, and automatic markdown exports.**
 
-Built for the **Appwrite Hacktoberfest 2025 Hackathon**, BuildLog helps developers track their hackathon projects and side projects with rich documentation, beautiful visualizations, seamless exports, and AI-powered assistance for GitHub submissions.
+Built for the **Appwrite Hacktoberfest 2025 Hackathon**, BuildLog helps developers track their hackathon projects and side projects with rich documentation, beautiful visualizations, powerful analytics dashboards, seamless exports, and AI-powered assistance for GitHub submissions.
 
-🏆 **Features 98% test coverage** - Production-ready code with 114 passing tests!
+🏆 **Features 96% test coverage** - Production-ready code with 141 passing tests!
 
 ---
 
@@ -19,6 +19,7 @@ Built for the **Appwrite Hacktoberfest 2025 Hackathon**, BuildLog helps develope
 - 📝 **Daily Build Logs**: Track your progress with rich text logs, code snippets, and notes
 - 🎨 **Beautiful Timeline Views**: Visualize your project journey with stunning, color-coded timelines
 - 📊 **Project Dashboard**: Manage multiple projects in one centralized location
+- 📈 **Analytics Dashboard**: Comprehensive analytics with beautiful charts powered by Chart.js
 - 📄 **Markdown Export**: One-click export to markdown for GitHub submissions and documentation
 - 🌐 **Public Portfolios**: Generate beautiful, shareable portfolio pages for each project
 - 📁 **File Uploads**: Store images, videos, and files securely with Appwrite Storage
@@ -29,6 +30,15 @@ Built for the **Appwrite Hacktoberfest 2025 Hackathon**, BuildLog helps develope
 - 🎯 **Smart Content**: Leverage OpenAI's GPT-3.5 to create professional, context-aware documentation
 - ⚡ **One-Click Generation**: Beautiful purple "Generate with AI" buttons integrated directly in forms
 - 🔒 **Optional Feature**: AI features are completely optional - use them when you need them, skip when you don't
+
+### Analytics Dashboard 📊
+- 📈 **Activity Over Time**: Line chart showing your build log activity over the last 30 days
+- 🥧 **Log Type Distribution**: Pie chart breakdown of updates, milestones, features, bug fixes, and notes
+- 📊 **Logs per Project**: Bar chart comparing activity across different projects
+- 📅 **Weekly Trend**: 8-week activity trend visualization
+- 📑 **Project Status**: Horizontal bar chart showing in progress, completed, and archived projects
+- 💯 **Summary Cards**: Quick stats for total projects, logs, active projects, and weekly activity
+- 🎨 **Beautiful Charts**: Powered by Chart.js with responsive design and smooth animations
 
 ### Appwrite Integration
 BuildLog leverages **Appwrite Cloud Services**:
@@ -212,7 +222,7 @@ buildlog/
 
 ## 📊 Testing
 
-BuildLog features **98% test coverage** with 114 comprehensive tests:
+BuildLog features **96% test coverage** with 141 comprehensive tests:
 
 ```bash
 # Run all tests
@@ -230,8 +240,9 @@ python3 -m pytest tests/ -v --cov=app --cov=main --cov-report=term-missing --cov
 - `app/models/schemas.py`: 100%
 - `app/services/appwrite_service.py`: 99%
 - `app/services/ai_service.py`: 100%
-- `main.py`: 96%
-- **Total**: 98%
+- `app/services/analytics_service.py`: 92%
+- `main.py`: 95%
+- **Total**: 96%
 
 ---
 
@@ -322,6 +333,10 @@ python3 -m pytest tests/ -v --cov=app --cov=main --cov-report=term-missing --cov
 - `GET /ai/status` - Check if AI features are enabled
 - `POST /ai/generate-description` - Generate project description with AI
 - `POST /ai/generate-log-content` - Generate build log content with AI
+
+### Analytics
+- `GET /analytics` - Analytics dashboard page
+- `GET /api/analytics` - Get complete analytics data (JSON)
 
 ### Utilities
 - `POST /upload` - Upload file
@@ -419,11 +434,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Project Stats
 
-- **Lines of Code**: 2,500+ (25 files)
-- **Test Coverage**: 98%
-- **Tests**: 114 passing
+- **Lines of Code**: 3,000+ (28 files)
+- **Test Coverage**: 96%
+- **Tests**: 141 passing
 - **Python Version**: 3.13+
 - **Framework**: FastAPI
+- **Visualization**: Chart.js for analytics
 - **AI Integration**: OpenAI GPT-3.5
 - **Database**: Appwrite Cloud
 

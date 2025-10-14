@@ -4,18 +4,18 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">My Projects</h1>
-        <p class="text-gray-600">Track and manage all your projects in one place</p>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Projects</h1>
+        <p class="text-gray-600 dark:text-gray-300">Track and manage all your projects in one place</p>
     </div>
 
     <!-- Projects Grid -->
     {% if projects %}
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for project in projects %}
-        <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition overflow-hidden border border-transparent dark:border-gray-700">
             <div class="p-6">
                 <div class="flex items-start justify-between mb-4">
-                    <h3 class="text-xl font-semibold text-gray-900">{{ project.name }}</h3>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">{{ project.name }}</h3>
                     <span class="px-3 py-1 text-xs font-semibold rounded-full
                         {% if project.status == 'completed' %}bg-green-100 text-green-800
                         {% elif project.status == 'in_progress' %}bg-blue-100 text-blue-800
@@ -24,23 +24,23 @@
                     </span>
                 </div>
 
-                <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
                     {{ project.description or 'No description provided' }}
                 </p>
 
                 {% if project.tech_stack %}
                 <div class="flex flex-wrap gap-2 mb-4">
                     {% for tech in project.tech_stack[:3] %}
-                    <span class="px-2 py-1 bg-indigo-50 text-primary text-xs rounded">{{ tech }}</span>
+                    <span class="px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-primary dark:text-indigo-300 text-xs rounded">{{ tech }}</span>
                     {% endfor %}
                     {% if project.tech_stack|length > 3 %}
-                    <span class="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded">+{{ project.tech_stack|length - 3 }}</span>
+                    <span class="px-2 py-1 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded">+{{ project.tech_stack|length - 3 }}</span>
                     {% endif %}
                 </div>
                 {% endif %}
 
-                <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <span class="text-xs text-gray-500">
+                <div class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">
                         <i class="fas fa-calendar mr-1"></i>
                         {{ project.created_at[:10] if project.created_at else 'N/A' }}
                     </span>
@@ -54,10 +54,10 @@
     </div>
     {% else %}
     <!-- Empty State -->
-    <div class="bg-white rounded-lg shadow-md p-12 text-center">
-        <i class="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
-        <h3 class="text-2xl font-semibold text-gray-900 mb-2">No Projects Yet</h3>
-        <p class="text-gray-600 mb-6">Start documenting your journey by creating your first project!</p>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-12 text-center border border-transparent dark:border-gray-700">
+        <i class="fas fa-folder-open text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+        <h3 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">No Projects Yet</h3>
+        <p class="text-gray-600 dark:text-gray-300 mb-6">Start documenting your journey by creating your first project!</p>
         <a href="/projects/new" class="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition inline-block">
             <i class="fas fa-plus mr-2"></i> Create Your First Project
         </a>

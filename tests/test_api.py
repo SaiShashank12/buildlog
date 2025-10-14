@@ -425,3 +425,254 @@ class TestErrorHandling:
             files={"file": ("test.jpg", file_data, "image/jpeg")}
         )
         assert response.status_code == 500
+
+
+class TestAIEndpoints:
+    """Test AI-powered endpoints"""
+
+    @patch('main.ai_service')
+    def test_ai_status_enabled(self, mock_ai_service, client):
+        """Test AI status endpoint when AI is enabled"""
+        mock_ai_service.is_enabled.return_value = True
+        response = client.get("/ai/status")
+        assert response.status_code == 200
+        json_response = response.json()
+        assert json_response["enabled"] is True
+
+    @patch('main.ai_service')
+    def test_ai_status_disabled(self, mock_ai_service, client):
+        """Test AI status endpoint when AI is disabled"""
+        mock_ai_service.is_enabled.return_value = False
+        response = client.get("/ai/status")
+        assert response.status_code == 200
+        json_response = response.json()
+        assert json_response["enabled"] is False
+
+    @patch('main.ai_service')
+    def test_generate_description_success(self, mock_ai_service, client):
+        """Test successful AI description generation"""
+        mock_ai_service.is_enabled.return_value = True
+        mock_ai_service.generate_project_description.return_value = "AI generated description"
+
+        response = client.post(
+            "/ai/generate-description",
+            data={
+                "project_name": "Test Project",
+                "tech_stack": "Python,FastAPI"
+            }
+        )
+        assert response.status_code == 200
+        json_response = response.json()
+        assert json_response["success"] is True
+        assert json_response["description"] == "AI generated description"
+
+    @patch('main.ai_service')
+    def test_generate_description_ai_disabled(self, mock_ai_service, client):
+        """Test AI description generation when AI is disabled"""
+        mock_ai_service.is_enabled.return_value = False
+
+        response = client.post(
+            "/ai/generate-description",
+            data={
+                "project_name": "Test Project",
+                "tech_stack": "Python"
+            }
+        )
+        assert response.status_code == 400
+        json_response = response.json()
+        assert json_response["success"] is False
+        assert "not enabled" in json_response["error"]
+
+    @patch('main.ai_service')
+    def test_generate_description_empty_result(self, mock_ai_service, client):
+        """Test AI description generation with empty result"""
+        mock_ai_service.is_enabled.return_value = True
+        mock_ai_service.generate_project_description.return_value = ""
+
+        response = client.post(
+            "/ai/generate-description",
+            data={
+                "project_name": "Test Project",
+                "tech_stack": ""
+            }
+        )
+        assert response.status_code == 500
+        json_response = response.json()
+        assert json_response["success"] is False
+
+    @patch('main.ai_service')
+    def test_generate_log_content_success(self, mock_ai_service, client):
+        """Test successful AI log content generation"""
+        mock_ai_service.is_enabled.return_value = True
+        mock_ai_service.generate_build_log_content.return_value = "AI generated log content"
+
+        response = client.post(
+            "/ai/generate-log-content",
+            data={
+                "project_name": "Test Project",
+                "log_type": "milestone",
+                "context": "Big achievement"
+            }
+        )
+        assert response.status_code == 200
+        json_response = response.json()
+        assert json_response["success"] is True
+        assert json_response["content"] == "AI generated log content"
+
+    @patch('main.ai_service')
+    def test_generate_log_content_ai_disabled(self, mock_ai_service, client):
+        """Test AI log content generation when AI is disabled"""
+        mock_ai_service.is_enabled.return_value = False
+
+        response = client.post(
+            "/ai/generate-log-content",
+            data={
+                "project_name": "Test Project",
+                "log_type": "update",
+                "context": ""
+            }
+        )
+        assert response.status_code == 400
+        json_response = response.json()
+        assert json_response["success"] is False
+        assert "not enabled" in json_response["error"]
+
+    @patch('main.ai_service')
+    def test_generate_log_content_empty_result(self, mock_ai_service, client):
+        """Test AI log content generation with empty result"""
+        mock_ai_service.is_enabled.return_value = True
+        mock_ai_service.generate_build_log_content.return_value = ""
+
+        response = client.post(
+            "/ai/generate-log-content",
+            data={
+                "project_name": "Test Project",
+                "log_type": "feature",
+                "context": ""
+            }
+        )
+        assert response.status_code == 500
+        json_response = response.json()
+        assert json_response["success"] is False
+
+    @patch('main.ai_service')
+    def test_generate_log_content_all_types(self, mock_ai_service, client):
+        """Test AI log content generation for all log types"""
+        mock_ai_service.is_enabled.return_value = True
+        mock_ai_service.generate_build_log_content.return_value = "Generated content"
+
+        for log_type in ["update", "milestone", "feature", "bug_fix", "note"]:
+            response = client.post(
+                "/ai/generate-log-content",
+                data={
+                    "project_name": "Test",
+                    "log_type": log_type,
+                    "context": ""
+                }
+            )
+            assert response.status_code == 200
+            json_response = response.json()
+            assert json_response["success"] is True
+
+
+class TestAnalyticsEndpoints:
+    """Test analytics dashboard and API endpoints"""
+
+    def test_analytics_dashboard_page(self, client):
+        """Test analytics dashboard page loads"""
+        response = client.get("/analytics")
+        assert response.status_code == 200
+        assert "Analytics" in response.text or "Chart" in response.text
+
+    @patch('main.analytics_service')
+    def test_get_analytics_data(self, mock_analytics, client, mock_appwrite):
+        """Test getting analytics data"""
+        mock_analytics.get_complete_analytics.return_value = {
+            'total_projects': 5,
+            'total_logs': 20,
+            'active_projects': 3,
+            'weekly_logs': 7,
+            'activity_over_time': {
+                'labels': ['Jan 1', 'Jan 2', 'Jan 3'],
+                'values': [5, 8, 3]
+            },
+            'log_type_distribution': {
+                'labels': ['Update', 'Milestone', 'Feature'],
+                'values': [10, 5, 5]
+            },
+            'logs_per_project': {
+                'labels': ['Project 1', 'Project 2'],
+                'values': [12, 8]
+            },
+            'weekly_trend': {
+                'labels': ['Week 1', 'Week 2'],
+                'values': [10, 10]
+            },
+            'activity_heatmap': [
+                {'date': '2024-01-01', 'count': 2},
+                {'date': '2024-01-02', 'count': 3}
+            ],
+            'project_status': {
+                'labels': ['In Progress', 'Completed'],
+                'values': [3, 2]
+            }
+        }
+
+        response = client.get("/api/analytics")
+        assert response.status_code == 200
+        json_response = response.json()
+
+        # Check all required fields
+        assert 'total_projects' in json_response
+        assert 'total_logs' in json_response
+        assert 'active_projects' in json_response
+        assert 'weekly_logs' in json_response
+        assert 'activity_over_time' in json_response
+        assert 'log_type_distribution' in json_response
+        assert 'logs_per_project' in json_response
+        assert 'weekly_trend' in json_response
+        assert 'activity_heatmap' in json_response
+        assert 'project_status' in json_response
+
+        # Verify data values
+        assert json_response['total_projects'] == 5
+        assert json_response['total_logs'] == 20
+        assert json_response['active_projects'] == 3
+
+    @patch('main.analytics_service')
+    def test_get_analytics_with_no_data(self, mock_analytics, client, mock_appwrite):
+        """Test analytics with no data"""
+        mock_analytics.get_complete_analytics.return_value = {
+            'total_projects': 0,
+            'total_logs': 0,
+            'active_projects': 0,
+            'weekly_logs': 0,
+            'activity_over_time': {'labels': [], 'values': []},
+            'log_type_distribution': {'labels': [], 'values': []},
+            'logs_per_project': {'labels': [], 'values': []},
+            'weekly_trend': {'labels': [], 'values': []},
+            'activity_heatmap': [],
+            'project_status': {'labels': [], 'values': []}
+        }
+
+        response = client.get("/api/analytics")
+        assert response.status_code == 200
+        json_response = response.json()
+        assert json_response['total_projects'] == 0
+        assert json_response['total_logs'] == 0
+
+    @patch('main.analytics_service')
+    def test_analytics_error_handling(self, mock_analytics, client, mock_appwrite):
+        """Test analytics API error handling"""
+        mock_analytics.get_complete_analytics.side_effect = Exception("Analytics error")
+
+        response = client.get("/api/analytics")
+        assert response.status_code == 500
+        json_response = response.json()
+        assert "error" in json_response
+
+    def test_analytics_dashboard_error_handling(self, client, mock_appwrite):
+        """Test analytics dashboard handles errors gracefully"""
+        response = client.get("/analytics")
+        # Should still return the page even if data fails to load
+        assert response.status_code == 200

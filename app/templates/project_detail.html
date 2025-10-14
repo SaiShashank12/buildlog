@@ -9,20 +9,23 @@
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ project.name }}</h1>
                 <p class="text-gray-600 dark:text-gray-300">{{ project.description or 'No description provided' }}</p>
             </div>
-            <div class="flex gap-2">
-                <a href="/projects/{{ project['$id'] }}/edit" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+            <div class="flex flex-wrap gap-3">
+                <a href="/projects/{{ project['$id'] }}/edit" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition shadow-sm">
                     <i class="fas fa-edit"></i> Edit
                 </a>
-                <button id="generateSummaryBtn" class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition">
+                <button id="generateSummaryBtn" class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition shadow-md">
                     <i class="fas fa-magic"></i> AI Summary
                 </button>
-                <button id="generateReadmeBtn" class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition">
+                <button id="generateReadmeBtn" class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition shadow-md">
                     <i class="fas fa-file-alt"></i> Generate README
                 </button>
-                <a href="/projects/{{ project['$id'] }}/export" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
-                    <i class="fas fa-download"></i> Export
+                <a href="/projects/{{ project['$id'] }}/export" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition shadow-md" title="Export project to Markdown file">
+                    <i class="fas fa-download"></i> Export to Markdown
                 </a>
             </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <strong>Tip:</strong> Use "AI Summary" for quick overview, "Generate README" for GitHub documentation, or "Export to Markdown" to download all logs as a single file.
+            </p>
         </div>
 
         <div class="grid md:grid-cols-2 gap-4 mt-6">
@@ -206,12 +209,13 @@ document.getElementById('generateSummaryBtn').addEventListener('click', async fu
 
         if (data.success) {
             // Convert markdown to HTML-like display
-            const summaryHtml = data.summary
-                .replace(/## (.*)/g, '<h2 class="text-xl font-bold text-gray-900 dark:text-white mt-4 mb-2">$1</h2>')
-                .replace(/### (.*)/g, '<h3 class="text-lg font-semibold text-gray-900 dark:text-white mt-3 mb-2">$1</h3>')
+            let summaryHtml = data.summary
+                .replace(/^### (.*)$/gm, '<h3 class="text-lg font-semibold text-gray-900 dark:text-white mt-3 mb-2">$1</h3>')
+                .replace(/^## (.*)$/gm, '<h2 class="text-xl font-bold text-gray-900 dark:text-white mt-4 mb-2">$1</h2>')
                 .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-gray-900 dark:text-white">$1</strong>')
-                .replace(/- (.*)/g, '<li class="ml-4 text-gray-700 dark:text-gray-300">$1</li>')
-                .replace(/\n\n/g, '<br><br>');
+                .replace(/^- (.*)$/gm, '<li class="ml-4 text-gray-700 dark:text-gray-300">$1</li>')
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
 
             document.getElementById('summaryContent').innerHTML = summaryHtml;
         } else {
@@ -258,14 +262,15 @@ document.getElementById('generateReadmeBtn').addEventListener('click', async fun
             window.generatedReadme = data.readme;
 
             // Convert markdown to HTML-like display
-            const readmeHtml = data.readme
-                .replace(/# (.*)/g, '<h1 class="text-3xl font-bold text-gray-900 dark:text-white mt-6 mb-3">$1</h1>')
-                .replace(/## (.*)/g, '<h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-5 mb-2">$1</h2>')
-                .replace(/### (.*)/g, '<h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-4 mb-2">$1</h3>')
+            let readmeHtml = data.readme
+                .replace(/^### (.*)$/gm, '<h3 class="text-xl font-semibold text-gray-900 dark:text-white mt-4 mb-2">$1</h3>')
+                .replace(/^## (.*)$/gm, '<h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-5 mb-2">$1</h2>')
+                .replace(/^# (.*)$/gm, '<h1 class="text-3xl font-bold text-gray-900 dark:text-white mt-6 mb-3">$1</h1>')
                 .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-gray-900 dark:text-white">$1</strong>')
                 .replace(/`([^`]+)`/g, '<code class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm text-gray-800 dark:text-gray-200">$1</code>')
-                .replace(/- (.*)/g, '<li class="ml-4 text-gray-700 dark:text-gray-300">$1</li>')
-                .replace(/\n\n/g, '<br><br>');
+                .replace(/^- (.*)$/gm, '<li class="ml-4 text-gray-700 dark:text-gray-300">$1</li>')
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
 
             document.getElementById('readmeContent').innerHTML = readmeHtml;
         } else {

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException, Depends
+from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException, Depends, Response
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -34,29 +34,225 @@ settings = get_settings()
 analytics_service = AnalyticsService(appwrite_service)
 
 
-# Helper function to get user from session (simplified for demo)
+# Authentication dependency
 async def get_current_user(request: Request):
-    """Get current user from session"""
-    # For demo purposes, always return a mock user
-    # In production, this would check session/JWT tokens
-    return {"$id": "demo_user", "email": "demo@buildlog.com", "name": "Demo User"}
+    """Get current user from session cookie"""
+    session_token = request.cookies.get("session")
+
+    if not session_token:
+        raise HTTPException(
+            status_code=302,
+            detail="Not authenticated",
+            headers={"Location": "/login"}
+        )
+
+    try:
+        user = appwrite_service.get_account(session_token)
+        return user
+    except Exception as e:
+        print(f"Error getting user from session: {e}")
+        raise HTTPException(
+            status_code=302,
+            detail="Invalid session",
+            headers={"Location": "/login"}
+        )
+
+
+async def get_current_user_optional(request: Request):
+    """Get current user from session cookie, returns None if not authenticated"""
+    session_token = request.cookies.get("session")
+
+    if not session_token:
+        return None
+
+    try:
+        user = appwrite_service.get_account(session_token)
+        return user
+    except Exception:
+        return None
 
 
 # Routes
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    """Homepage"""
+    """Homepage - redirect to dashboard if logged in, otherwise show landing page"""
+    user = await get_current_user_optional(request)
+
+    if user:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "title": "BuildLog - Document Your Journey"
+        "title": "BuildLog - Document Your Journey",
+        "user": None
     })
 
 
+# Authentication Routes
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Show login page"""
+    user = await get_current_user_optional(request)
+    if user:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+        "title": "Login",
+        "user": None,
+        "error": None
+    })
+
+
+@app.post("/login")
+async def login(
+    request: Request,
+    response: Response,
+    email: str = Form(...),
+    password: str = Form(...)
+):
+    """Handle login form submission"""
+    try:
+        # Create session with Appwrite
+        session = appwrite_service.create_session(email, password)
+
+        # Create redirect response
+        redirect = RedirectResponse(url="/dashboard", status_code=303)
+
+        # Store session token in cookie
+        redirect.set_cookie(
+            key="session",
+            value=session["secret"],
+            httponly=True,
+            max_age=60 * 60 * 24 * 30,  # 30 days
+            samesite="lax"
+        )
+
+        # Store session ID in cookie for logout
+        redirect.set_cookie(
+            key="session_id",
+            value=session["$id"],
+            httponly=True,
+            max_age=60 * 60 * 24 * 30,  # 30 days
+            samesite="lax"
+        )
+
+        return redirect
+
+    except Exception as e:
+        print(f"Login error: {e}")
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "title": "Login",
+            "user": None,
+            "error": "Invalid email or password. Please try again."
+        }, status_code=401)
+
+
+@app.get("/signup", response_class=HTMLResponse)
+async def signup_page(request: Request):
+    """Show signup page"""
+    user = await get_current_user_optional(request)
+    if user:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    return templates.TemplateResponse("signup.html", {
+        "request": request,
+        "title": "Sign Up",
+        "user": None,
+        "error": None
+    })
+
+
+@app.post("/signup")
+async def signup(
+    request: Request,
+    response: Response,
+    name: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...)
+):
+    """Handle signup form submission"""
+    try:
+        # Create account with Appwrite
+        appwrite_service.create_account(email, password, name)
+
+        # Automatically log in after signup
+        session = appwrite_service.create_session(email, password)
+
+        # Create redirect response
+        redirect = RedirectResponse(url="/dashboard", status_code=303)
+
+        # Store session token in cookie
+        redirect.set_cookie(
+            key="session",
+            value=session["secret"],
+            httponly=True,
+            max_age=60 * 60 * 24 * 30,  # 30 days
+            samesite="lax"
+        )
+
+        # Store session ID in cookie for logout
+        redirect.set_cookie(
+            key="session_id",
+            value=session["$id"],
+            httponly=True,
+            max_age=60 * 60 * 24 * 30,  # 30 days
+            samesite="lax"
+        )
+
+        return redirect
+
+    except Exception as e:
+        error_message = str(e)
+        if "user already exists" in error_message.lower() or "already exists" in error_message.lower():
+            error_message = "An account with this email already exists. Please login instead."
+        else:
+            error_message = "Unable to create account. Please try again."
+
+        print(f"Signup error: {e}")
+        return templates.TemplateResponse("signup.html", {
+            "request": request,
+            "title": "Sign Up",
+            "user": None,
+            "error": error_message
+        }, status_code=400)
+
+
+@app.get("/logout")
+async def logout(request: Request):
+    """Handle logout"""
+    try:
+        session_token = request.cookies.get("session")
+        session_id = request.cookies.get("session_id")
+
+        if session_token and session_id:
+            try:
+                appwrite_service.delete_session(session_token, session_id)
+            except Exception as e:
+                print(f"Error deleting session: {e}")
+
+        # Create redirect response
+        redirect = RedirectResponse(url="/", status_code=303)
+
+        # Clear session cookies
+        redirect.delete_cookie("session")
+        redirect.delete_cookie("session_id")
+
+        return redirect
+
+    except Exception as e:
+        print(f"Logout error: {e}")
+        redirect = RedirectResponse(url="/", status_code=303)
+        redirect.delete_cookie("session")
+        redirect.delete_cookie("session_id")
+        return redirect
+
+
 @app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
+async def dashboard(request: Request, user: dict = Depends(get_current_user)):
     """User dashboard with all projects"""
     try:
-        user = await get_current_user(request)
         projects = appwrite_service.get_projects(user["$id"])
 
         return templates.TemplateResponse("dashboard.html", {
@@ -71,15 +267,14 @@ async def dashboard(request: Request):
             "request": request,
             "title": "Dashboard",
             "projects": [],
-            "user": await get_current_user(request)
+            "user": user
         })
 
 
 @app.get("/analytics", response_class=HTMLResponse)
-async def analytics_dashboard(request: Request):
+async def analytics_dashboard(request: Request, user: dict = Depends(get_current_user)):
     """Analytics dashboard with charts and statistics"""
     try:
-        user = await get_current_user(request)
         return templates.TemplateResponse("analytics.html", {
             "request": request,
             "title": "Analytics",
@@ -91,10 +286,9 @@ async def analytics_dashboard(request: Request):
 
 
 @app.get("/api/analytics")
-async def get_analytics(request: Request):
+async def get_analytics(request: Request, user: dict = Depends(get_current_user)):
     """Get analytics data"""
     try:
-        user = await get_current_user(request)
         analytics = analytics_service.get_complete_analytics(user["$id"])
         return JSONResponse(analytics)
     except Exception as e:
@@ -105,9 +299,8 @@ async def get_analytics(request: Request):
 
 
 @app.get("/projects/new", response_class=HTMLResponse)
-async def new_project_form(request: Request):
+async def new_project_form(request: Request, user: dict = Depends(get_current_user)):
     """Show create project form"""
-    user = await get_current_user(request)
     return templates.TemplateResponse("project_form.html", {
         "request": request,
         "title": "Create New Project",
@@ -119,6 +312,7 @@ async def new_project_form(request: Request):
 @app.post("/projects/new")
 async def create_project(
     request: Request,
+    user: dict = Depends(get_current_user),
     name: str = Form(...),
     description: str = Form(""),
     tech_stack: str = Form(""),
@@ -128,7 +322,6 @@ async def create_project(
 ):
     """Create a new project"""
     try:
-        user = await get_current_user(request)
 
         project_data = {
             "name": name,
@@ -150,10 +343,9 @@ async def create_project(
 
 
 @app.get("/projects/{project_id}", response_class=HTMLResponse)
-async def view_project(request: Request, project_id: str):
+async def view_project(request: Request, project_id: str, user: dict = Depends(get_current_user)):
     """View single project with all build logs"""
     try:
-        user = await get_current_user(request)
         project = appwrite_service.get_project(project_id)
         build_logs = appwrite_service.get_build_logs(project_id)
 
@@ -173,10 +365,9 @@ async def view_project(request: Request, project_id: str):
 
 
 @app.get("/projects/{project_id}/edit", response_class=HTMLResponse)
-async def edit_project_form(request: Request, project_id: str):
+async def edit_project_form(request: Request, project_id: str, user: dict = Depends(get_current_user)):
     """Show edit project form"""
     try:
-        user = await get_current_user(request)
         project = appwrite_service.get_project(project_id)
 
         return templates.TemplateResponse("project_form.html", {
@@ -194,6 +385,7 @@ async def edit_project_form(request: Request, project_id: str):
 async def update_project(
     request: Request,
     project_id: str,
+    user: dict = Depends(get_current_user),
     name: str = Form(...),
     description: str = Form(""),
     tech_stack: str = Form(""),
@@ -223,7 +415,7 @@ async def update_project(
 
 
 @app.post("/projects/{project_id}/delete")
-async def delete_project(request: Request, project_id: str):
+async def delete_project(request: Request, project_id: str, user: dict = Depends(get_current_user)):
     """Delete a project"""
     try:
         appwrite_service.delete_project(project_id)
@@ -233,11 +425,37 @@ async def delete_project(request: Request, project_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/projects/{project_id}/status/{new_status}")
+async def update_project_status(
+    request: Request,
+    project_id: str,
+    new_status: str,
+    user: dict = Depends(get_current_user)
+):
+    """Quick update project status"""
+    try:
+        # Validate status
+        valid_statuses = ["planning", "in_progress", "completed", "on_hold"]
+        if new_status not in valid_statuses:
+            raise HTTPException(status_code=400, detail="Invalid status")
+
+        # Update only the status field
+        project_data = {
+            "status": new_status,
+            "updated_at": datetime.now().isoformat()
+        }
+
+        appwrite_service.update_project(project_id, project_data)
+        return RedirectResponse(url=f"/projects/{project_id}", status_code=303)
+    except Exception as e:
+        print(f"Error updating project status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/projects/{project_id}/logs/new", response_class=HTMLResponse)
-async def new_log_form(request: Request, project_id: str):
+async def new_log_form(request: Request, project_id: str, user: dict = Depends(get_current_user)):
     """Show create build log form"""
     try:
-        user = await get_current_user(request)
         project = appwrite_service.get_project(project_id)
 
         return templates.TemplateResponse("log_form.html", {
@@ -256,6 +474,7 @@ async def new_log_form(request: Request, project_id: str):
 async def create_build_log(
     request: Request,
     project_id: str,
+    user: dict = Depends(get_current_user),
     title: str = Form(...),
     content: str = Form(...),
     log_type: str = Form("update"),
@@ -282,10 +501,9 @@ async def create_build_log(
 
 
 @app.get("/projects/{project_id}/logs/{log_id}/edit", response_class=HTMLResponse)
-async def edit_log_form(request: Request, project_id: str, log_id: str):
+async def edit_log_form(request: Request, project_id: str, log_id: str, user: dict = Depends(get_current_user)):
     """Show edit build log form"""
     try:
-        user = await get_current_user(request)
         project = appwrite_service.get_project(project_id)
 
         # Get the specific log
@@ -312,6 +530,7 @@ async def update_build_log(
     request: Request,
     project_id: str,
     log_id: str,
+    user: dict = Depends(get_current_user),
     title: str = Form(...),
     content: str = Form(...),
     log_type: str = Form("update"),
@@ -334,7 +553,7 @@ async def update_build_log(
 
 
 @app.post("/projects/{project_id}/logs/{log_id}/delete")
-async def delete_build_log(request: Request, project_id: str, log_id: str):
+async def delete_build_log(request: Request, project_id: str, log_id: str, user: dict = Depends(get_current_user)):
     """Delete a build log entry"""
     try:
         appwrite_service.delete_build_log(log_id)
@@ -345,7 +564,7 @@ async def delete_build_log(request: Request, project_id: str, log_id: str):
 
 
 @app.get("/projects/{project_id}/export", response_class=HTMLResponse)
-async def export_to_markdown(request: Request, project_id: str):
+async def export_to_markdown(request: Request, project_id: str, user: dict = Depends(get_current_user)):
     """Export project to markdown"""
     try:
         project = appwrite_service.get_project(project_id)

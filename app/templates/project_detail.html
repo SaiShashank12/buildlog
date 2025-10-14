@@ -108,11 +108,46 @@
     <!-- Project Header -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8 border border-transparent dark:border-gray-700 transition-colors">
         <div class="flex items-start justify-between mb-4">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ project.name }}</h1>
+            <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ project.name }}</h1>
+                    <span class="px-3 py-1 text-sm font-semibold rounded-full
+                        {% if project.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                        {% elif project.status == 'in_progress' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                        {% elif project.status == 'planning' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                        {% elif project.status == 'on_hold' %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300
+                        {% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
+                        {{ project.status|replace('_', ' ')|title if project.status else 'In Progress' }}
+                    </span>
+                </div>
                 <p class="text-gray-600 dark:text-gray-300">{{ project.description or 'No description provided' }}</p>
+
+                <!-- Quick Status Actions -->
+                <div class="flex gap-2 mt-3">
+                    {% if project.status != 'completed' %}
+                    <form method="POST" action="/projects/{{ project['$id'] }}/status/completed" class="inline">
+                        <button type="submit" class="text-sm px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition border border-green-200 dark:border-green-800">
+                            <i class="fas fa-check-circle mr-1"></i> Mark as Complete
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% if project.status == 'completed' %}
+                    <form method="POST" action="/projects/{{ project['$id'] }}/status/in_progress" class="inline">
+                        <button type="submit" class="text-sm px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition border border-blue-200 dark:border-blue-800">
+                            <i class="fas fa-redo mr-1"></i> Reopen Project
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% if project.status not in ['on_hold', 'completed'] %}
+                    <form method="POST" action="/projects/{{ project['$id'] }}/status/on_hold" class="inline">
+                        <button type="submit" class="text-sm px-3 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition border border-gray-200 dark:border-gray-600">
+                            <i class="fas fa-pause-circle mr-1"></i> Put on Hold
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
             </div>
-            <div class="flex flex-wrap gap-3">
+            <div class="flex flex-wrap gap-3 ml-4">
                 <a href="/projects/{{ project['$id'] }}/edit" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition shadow-sm" title="Edit project details">
                     <i class="fas fa-edit"></i> Edit
                 </a>

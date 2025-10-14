@@ -230,15 +230,21 @@ class AnalyticsService:
                 status = project.get('status', 'in_progress')
                 status_counts[status] += 1
 
-            # Map status to readable labels
+            # Map status to readable labels (in consistent order)
             status_map = {
+                'planning': 'Planning',
                 'in_progress': 'In Progress',
                 'completed': 'Completed',
-                'archived': 'Archived'
+                'on_hold': 'On Hold'
             }
 
-            labels = [status_map.get(s, s.title()) for s in status_counts.keys()]
-            values = list(status_counts.values())
+            # Maintain consistent order for chart
+            labels = []
+            values = []
+            for status_key, status_label in status_map.items():
+                if status_key in status_counts:
+                    labels.append(status_label)
+                    values.append(status_counts[status_key])
 
             return {
                 'labels': labels,

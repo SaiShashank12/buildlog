@@ -117,7 +117,6 @@
                     id="content"
                     name="content"
                     rows="10"
-                    required
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
                     placeholder="Describe your progress, challenges, and achievements..."
                 >{{ log.content if log else '' }}</textarea>
@@ -208,6 +207,18 @@ document.addEventListener('DOMContentLoaded', function() {
             codeSyntaxHighlighting: true,
         },
         minHeight: '300px',
+    });
+
+    // Add form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const content = easyMDE.value().trim();
+        if (!content) {
+            e.preventDefault();
+            alert('Please enter some content for the log entry.');
+            easyMDE.codemirror.focus();
+            return false;
+        }
     });
 });
 
